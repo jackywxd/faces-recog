@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { createR2StorageService } from "../services/r2-storage";
 
 // 创建健康检查路由实例
 export const healthRoutes = new Hono();
@@ -29,9 +30,10 @@ healthRoutes.get("/detailed", async (c) => {
   // 检查 R2 存储 (如果绑定存在)
   try {
     if (c.env?.BUCKET) {
-      // 尝试列出存储桶 (限制1个对象以减少开销)
-      await c.env.BUCKET.list({ limit: 1 });
-      checks.storage = true;
+      // 创建 R2 存储服务实例并检查连接
+      const r2Service = createR2StorageService(c.env.BUCKET as any);
+      const isConnected = await r2Service.checkConnection();
+      checks.storage = isConnected;
     }
   } catch (error) {
     console.warn("Storage health check failed:", error);
@@ -41,7 +43,7 @@ healthRoutes.get("/detailed", async (c) => {
   try {
     if (c.env?.DB) {
       // 简单查询测试连接
-      await c.env.DB.prepare("SELECT 1").first();
+      await (c.env.DB as any).prepare("SELECT 1").first();
       checks.database = true;
     }
   } catch (error) {

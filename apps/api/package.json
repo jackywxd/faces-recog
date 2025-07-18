@@ -14,6 +14,7 @@
   "dependencies": {
     "@hono/zod-validator": "^0.2.1",
     "hono": "^3.12.8",
+    "uuid": "^11.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -21,6 +22,7 @@
     "@face-recog/config": "workspace:*",
     "@face-recog/shared": "workspace:*",
     "@types/node": "catalog:",
+    "@types/uuid": "^10.0.0",
     "eslint": "^8.56.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.0",
