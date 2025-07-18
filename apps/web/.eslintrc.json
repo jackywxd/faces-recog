@@ -1,0 +1,3 @@
+{
+  "extends": ["@face-recog/config/eslint/next.js"]
+}

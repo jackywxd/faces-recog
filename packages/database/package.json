@@ -1,0 +1,55 @@
+{
+  "name": "@face-recog/database",
+  "version": "0.1.0",
+  "description": "数据库模式、迁移和客户端配置",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "default": "./dist/schema/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    },
+    "./migrations": {
+      "types": "./dist/migrations/index.d.ts",
+      "default": "./dist/migrations/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "migrations/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "db:generate": "drizzle-kit generate:sqlite",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push:sqlite"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.29.0",
+    "@cloudflare/d1": "^1.0.0",
+    "@paralleldrive/cuid2": "^2.2.0"
+  },
+  "devDependencies": {
+    "@face-recog/config": "workspace:*",
+    "@face-recog/shared": "workspace:*",
+    "@types/node": "^20.0.0",
+    "drizzle-kit": "^0.20.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "better-sqlite3": "^9.0.0"
+  }
+}

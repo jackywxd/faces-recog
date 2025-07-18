@@ -1,0 +1,42 @@
+{
+  "name": "photo-face-recognition",
+  "version": "1.0.0",
+  "description": "基于 Cloudflare 全栈技术的人脸识别系统",
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:api": "turbo run dev --filter=api",
+    "build": "turbo run build",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:mcp": "node scripts/mcp-test-runner.js",
+    "test:report": "playwright show-report",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "deploy": "turbo run deploy"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.0.0",
+    "turbo": "^1.11.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20231025.0",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "better-sqlite3": "^12.2.0",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.44.3",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.0.5",
+    "zustand": "^5.0.6"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

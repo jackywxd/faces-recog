@@ -1,0 +1,12 @@
+{
+  "extends": "./typescript/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "types": ["node"]
+  },
+  "include": ["**/*.js", "**/*.json"],
+  "exclude": ["node_modules", "dist"]
+}

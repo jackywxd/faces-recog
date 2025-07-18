@@ -1,0 +1,573 @@
+# Cursor Rules - 照片人脸识别系统
+
+## 项目概述
+
+这是一个基于 Cloudflare 全栈技术的现代化 Web 人脸识别系统，采用 Turborepo 单体仓库架构，结合容器化 AI 服务。
+
+## 核心开发原则
+
+### 🎯 测试驱动开发 (TDD)
+- **红色阶段**: 先写失败的测试定义预期行为
+- **绿色阶段**: 编写最少代码使测试通过  
+- **重构阶段**: 改进代码同时保持测试通过
+- **验收标准**: 每个迭代必须通过 100% Playwright 自动化测试
+
+### 🔒 类型安全优先
+- 使用 Zod 模式作为类型定义和验证的单一真实来源
+- 从 Zod 模式推断 TypeScript 类型: `type Photo = z.infer<typeof PhotoSchema>`
+- 避免使用 `any` 类型，优先使用 `unknown`
+- 所有 API 输入输出都经过 Zod 验证
+
+### 🏗️ 架构模式
+- **单体仓库**: 使用 Turborepo 管理多包依赖
+- **边缘优先**: 基于 Cloudflare 全栈平台
+- **容器化 AI**: 使用 Cloudflare Containers 运行人脸检测服务
+- **会话隔离**: 每个搜索作业使用独立容器实例
+
+---
+
+## 📋 测试指南 (Testing Guide)
+
+### Playwright 自动化测试
+
+#### 测试结构
+```
+tests/
+├── iteration-1/     # 迭代 1: 基础架构测试 (5个测试用例)
+├── iteration-2/     # 迭代 2: 面部检测测试 (6个测试用例)  
+├── iteration-3/     # 迭代 3: 面部匹配测试 (7个测试用例)
+├── iteration-4/     # 迭代 4: 性能优化测试 (8个测试用例)
+├── iteration-5/     # 迭代 5: 生产就绪测试 (8个测试用例)
+├── api/            # API 端点测试
+├── assets/         # 测试资源文件
+├── setup/          # 全局设置和清理
+└── reporters/      # MCP 自定义报告器
+```
+
+#### 测试规范
+- **数据属性**: 使用 `[data-testid="element-name"]` 选择器
+- **超时设置**: 默认 30s，网络操作 15s，UI 交互 5s
+- **错误处理**: 每个测试都要验证错误场景和恢复机制
+- **清理策略**: 测试后自动清理临时数据和文件
+
+#### 测试命令
+```bash
+pnpm test              # 运行所有测试
+pnpm test:ui           # UI 模式运行测试
+pnpm test:debug        # 调试模式
+pnpm test:mcp          # MCP 集成测试
+```
+
+#### MCP 集成
+- 测试结果自动发送到 Cursor
+- 实时进度更新和错误报告
+- 生成 Markdown 格式的测试报告
+- 支持多浏览器并行测试 (Chrome, Firefox, Safari, Mobile)
+
+### 测试用例模板
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('功能模块名称', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('具体测试场景描述', async ({ page }) => {
+    // 准备阶段
+    const element = page.locator('[data-testid="target-element"]');
+    
+    // 执行阶段
+    await element.click();
+    
+    // 验证阶段
+    await expect(element).toHaveState('expected-state');
+  });
+
+  test.afterEach(async ({ page }) => {
+    // 清理资源
+  });
+});
+```
+
+---
+
+## 🎨 编码标准 (Coding Standards)
+
+### TypeScript 规范
+
+#### 类型定义
+```typescript
+// ✅ 好的做法
+import { z } from 'zod';
+
+export const PhotoSchema = z.object({
+  id: z.string().uuid(),
+  filename: z.string().min(1).max(255),
+  storagePath: z.string().min(1)
+});
+
+export type Photo = z.infer<typeof PhotoSchema>;
+
+// ❌ 避免的做法
+export interface Photo {
+  id: any;  // 不要使用 any
+  filename: string;
+}
+```
+
+#### 命名约定
+- **类型/接口/组件**: PascalCase (`PhotoUpload`, `SearchResult`)
+- **变量/函数/方法**: camelCase (`uploadFile`, `detectFaces`)
+- **常量**: SCREAMING_SNAKE_CASE (`MAX_FILE_SIZE`, `API_ENDPOINTS`)
+- **文件名**: kebab-case (`photo-upload.tsx`, `face-detection.ts`)
+
+### React 组件规范
+
+#### 组件结构
+```typescript
+// ✅ 标准组件模板
+import React, { useCallback, useState } from 'react';
+import { Card, Button, Progress } from '@/components/ui';
+import { PhotoUploadProps } from '@/types';
+
+const PhotoUpload: React.FC<PhotoUploadProps> = ({ onUpload }) => {
+  // 1. Hooks 在顶部
+  const [file, setFile] = useState<File | null>(null);
+  
+  // 2. 事件处理函数
+  const handleFileSelect = useCallback((file: File) => {
+    // 实现逻辑
+  }, []);
+  
+  // 3. 渲染
+  return (
+    <Card data-testid="upload-area">
+      {/* JSX 内容 */}
+    </Card>
+  );
+};
+
+export default PhotoUpload;
+```
+
+#### shadcn/ui 使用规范
+- 优先使用 shadcn/ui 组件而不是自定义组件
+- 保持组件的可访问性属性
+- 使用 Tailwind CSS 进行样式定制
+- 遵循设计系统的颜色和间距规范
+
+### API 开发规范
+
+#### Hono 路由结构
+```typescript
+// ✅ 标准路由实现
+import { Hono } from 'hono';
+import { z } from 'zod';
+
+const app = new Hono<{
+  Bindings: {
+    DB: D1Database;
+    BUCKET: R2Bucket;
+    FACE_DETECTOR: DurableObjectNamespace;
+  };
+}>();
+
+app.post('/api/upload', async (c) => {
+  // 1. 输入验证
+  const result = UploadRequestSchema.safeParse(await c.req.json());
+  if (!result.success) {
+    return c.json({ error: result.error }, 400);
+  }
+  
+  // 2. 业务逻辑
+  // 3. 返回响应
+});
+```
+
+#### 错误处理规范
+```typescript
+// ✅ 统一错误响应格式
+interface ErrorResponse {
+  error: true;
+  code: string;
+  message: string;
+  details?: unknown;
+}
+```
+
+### 容器化服务规范
+
+#### 面部检测服务
+```typescript
+// ✅ 容器服务标准结构
+export class FaceDetectorContainer extends Container {
+  defaultPort = 8080;
+  sleepAfter = '10m';
+  enableInternet = false;
+  
+  override async onStart() {
+    // 容器启动逻辑
+  }
+  
+  override async onStop() {
+    // 优雅关闭逻辑
+  }
+  
+  override async onError(error: Error) {
+    // 错误处理逻辑
+  }
+}
+```
+
+---
+
+## 📦 共享包指南 (Shared Package Guide)
+
+### 包结构
+```
+packages/shared/
+├── src/
+│   ├── types/           # Zod 模式和 TypeScript 类型
+│   ├── constants/       # 应用程序常量
+│   ├── utils/          # 工具函数
+│   ├── services/       # 服务抽象
+│   ├── stores/         # Zustand 状态管理
+│   └── test/           # 测试工具和夹具
+├── package.json
+└── tsconfig.json
+```
+
+### 服务抽象层
+
+#### 存储服务
+```typescript
+// ✅ 存储抽象接口
+export interface StorageAdapter {
+  upload(file: Buffer, key: string): Promise<string>;
+  download(key: string): Promise<Buffer>;
+  delete(key: string): Promise<void>;
+  getUrl(key: string): Promise<string>;
+}
+
+// 环境适配
+export function createStorageAdapter(): StorageAdapter {
+  return process.env.NODE_ENV === 'production' 
+    ? new R2StorageAdapter()
+    : new LocalStorageAdapter();
+}
+```
+
+#### 数据库服务
+```typescript
+// ✅ 数据库抽象接口
+export interface DatabaseAdapter {
+  photos: PhotoRepository;
+  faceEncodings: FaceEncodingRepository;
+  searchJobs: SearchJobRepository;
+}
+
+export function createDatabaseAdapter(): DatabaseAdapter {
+  return process.env.NODE_ENV === 'production'
+    ? new D1DatabaseAdapter()
+    : new SQLiteDatabaseAdapter();
+}
+```
+
+### 状态管理
+
+#### Zustand 存储模式
+```typescript
+// ✅ 状态管理模板
+import { create } from 'zustand';
+
+interface UploadState {
+  files: File[];
+  progress: Record<string, number>;
+  errors: Record<string, string>;
+  
+  // Actions
+  addFile: (file: File) => void;
+  updateProgress: (fileId: string, progress: number) => void;
+  setError: (fileId: string, error: string) => void;
+}
+
+export const useUploadStore = create<UploadState>((set, get) => ({
+  files: [],
+  progress: {},
+  errors: {},
+  
+  addFile: (file) => set((state) => ({
+    files: [...state.files, file]
+  })),
+  
+  updateProgress: (fileId, progress) => set((state) => ({
+    progress: { ...state.progress, [fileId]: progress }
+  })),
+  
+  setError: (fileId, error) => set((state) => ({
+    errors: { ...state.errors, [fileId]: error }
+  }))
+}));
+```
+
+### 工具函数规范
+
+#### 验证工具
+```typescript
+// ✅ 输入验证模板
+export function validateImageFile(file: File): ValidationResult {
+  const result = FileUploadSchema.safeParse(file);
+  return {
+    isValid: result.success,
+    errors: result.success ? [] : result.error.issues
+  };
+}
+```
+
+#### 图像处理工具
+```typescript
+// ✅ 图像处理模板
+import sharp from 'sharp';
+
+export async function createThumbnail(
+  buffer: Buffer, 
+  width: number = 300
+): Promise<Buffer> {
+  return sharp(buffer)
+    .resize(width, width, { 
+      fit: 'cover',
+      position: 'center'
+    })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+}
+```
+
+---
+
+## 🚀 部署指南 (Deployment Guide)
+
+### Cloudflare 部署架构
+
+#### Turborepo 构建流程
+```bash
+# 增量构建
+pnpm run build
+
+# 类型检查
+pnpm run type-check
+
+# 测试验证
+pnpm run test
+
+# 部署
+pnpm run deploy
+```
+
+#### 前端部署 (Cloudflare Pages)
+```javascript
+// next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  }
+};
+
+module.exports = nextConfig;
+```
+
+#### API 部署 (Cloudflare Workers)
+```jsonc
+// wrangler.jsonc
+{
+  "name": "face-recognition-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  "containers": [
+    {
+      "class_name": "FaceDetectorContainer",
+      "image": "../face-detector/Dockerfile",
+      "instances": 5,
+      "name": "face-detector-service"
+    }
+  ],
+  
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "FACE_DETECTOR",
+        "class_name": "FaceDetectorContainer"
+      }
+    ]
+  },
+  
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "face-recognition-db"
+    }
+  ],
+  
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "face-recognition-photos"
+    }
+  ]
+}
+```
+
+#### 容器部署配置
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 安装系统依赖
+RUN apk add --no-cache \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    musl-dev
+
+# 安装和构建
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY src/ ./src/
+COPY models/ ./models/
+RUN npm run build
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+# 启动服务
+CMD ["node", "dist/server.js"]
+```
+
+### CI/CD 流程
+
+#### GitHub Actions 配置
+```yaml
+# .github/workflows/ci.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run test
+      - run: pnpm run lint
+      - run: pnpm run type-check
+      
+      - name: Playwright Tests
+        run: pnpm run test:e2e
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Cloudflare
+        run: |
+          pnpm run deploy:web
+          pnpm run deploy:api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+```
+
+### 环境管理
+
+#### 环境变量配置
+```typescript
+// 环境变量类型定义
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      NODE_ENV: 'development' | 'production' | 'test';
+      TEST_BASE_URL?: string;
+      API_BASE_URL?: string;
+      CLOUDFLARE_API_TOKEN?: string;
+      CLOUDFLARE_ACCOUNT_ID?: string;
+    }
+  }
+}
+```
+
+#### 数据库迁移
+```bash
+# 创建 D1 数据库
+npx wrangler d1 create face-recognition-db
+
+# 执行迁移
+npx wrangler d1 migrations apply face-recognition-db
+
+# 查询数据库
+npx wrangler d1 execute face-recognition-db --command="SELECT * FROM photos LIMIT 5"
+```
+
+---
+
+## 🔍 开发工作流
+
+### 新功能开发
+1. **创建分支**: `git checkout -b feature/新功能名`
+2. **编写测试**: 先写失败的测试用例
+3. **实现功能**: 编写最少代码使测试通过
+4. **重构优化**: 改进代码结构和性能
+5. **提交代码**: 确保所有测试通过
+6. **创建 PR**: 代码审查和自动化测试
+
+### 迭代开发流程
+按照任务清单中的 5 个迭代进行：
+- **迭代 1**: 基础架构原型 (16个任务，5个测试用例)
+- **迭代 2**: 面部检测原型 (11个任务，6个测试用例)  
+- **迭代 3**: 面部匹配原型 (13个任务，7个测试用例)
+- **迭代 4**: 性能和体验优化 (15个任务，8个测试用例)
+- **迭代 5**: 生产就绪 (17个任务，8个测试用例)
+
+### 代码审查检查清单
+- [ ] 类型安全：使用 Zod 验证和 TypeScript 类型
+- [ ] 测试覆盖：包含单元测试和 E2E 测试
+- [ ] 错误处理：完善的错误处理和用户反馈
+- [ ] 性能优化：符合性能指标要求
+- [ ] 安全考虑：输入验证和访问控制
+- [ ] 文档更新：API 文档和代码注释
+
+---
+
+## 📖 参考资源
+
+- **项目概述**: `project-overview.md`
+- **设计文档**: `design-document.md` 
+- **任务清单**: `tasks.md`
+- **需求文档**: `requirements.md`
+
+---
+
+*本项目代表了现代化 Web 开发的最佳实践，结合了 Turborepo 的构建优化、Cloudflare 的边缘计算、容器化的 AI 服务，以及严格的测试驱动开发方法。* 
