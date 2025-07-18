@@ -1,0 +1,97 @@
+{
+  "name": "face-recog-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // 环境变量
+  "vars": {
+    "ENVIRONMENT": "development"
+  },
+
+  // R2 对象存储绑定
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "face-recog-photos"
+    }
+  ],
+
+  // D1 数据库绑定 (迭代3会启用)
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "face-recog-db"
+  //   }
+  // ],
+
+  // 容器服务绑定 (迭代2会启用)
+  // "containers": [
+  //   {
+  //     "class_name": "FaceDetectorContainer",
+  //     "image": "../face-detector/Dockerfile",
+  //     "instances": 5,
+  //     "name": "face-detector-service"
+  //   }
+  // ],
+
+  // Durable Objects 绑定 (迭代2会启用)
+  // "durable_objects": {
+  //   "bindings": [
+  //     {
+  //       "name": "FACE_DETECTOR",
+  //       "class_name": "FaceDetectorContainer"
+  //     }
+  //   ]
+  // },
+
+  // 开发环境配置
+  "dev": {
+    "port": 8787,
+    "local_protocol": "http",
+    "upstream_protocol": "https"
+  },
+
+  // 生产环境配置
+  "env": {
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production"
+      },
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "face-recog-photos-prod"
+        }
+      ]
+    },
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging"
+      },
+      "r2_buckets": [
+        {
+          "binding": "BUCKET",
+          "bucket_name": "face-recog-photos-staging"
+        }
+      ]
+    }
+  },
+
+  // 网络和安全配置
+  "usage_model": "bundled",
+  "limits": {
+    "cpu_ms": 50000,
+    "memory_mb": 128
+  },
+
+  // 路由配置 (生产环境会设置自定义域名)
+  "routes": [],
+
+  // 构建配置
+  "build": {
+    "command": "echo 'Build completed'",
+    "cwd": "src",
+    "watch_dir": "src"
+  }
+}

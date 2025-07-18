@@ -1,0 +1,30 @@
+{
+  "name": "@face-recog/api",
+  "version": "0.1.0",
+  "description": "Face recognition API service using Hono on Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.2.1",
+    "hono": "^3.12.8",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "@face-recog/config": "workspace:*",
+    "@face-recog/shared": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0",
+    "wrangler": "^3.22.1"
+  },
+  "type": "module"
+}
