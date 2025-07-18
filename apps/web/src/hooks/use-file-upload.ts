@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useToast } from "./use-toast";
+import { useErrorHandler } from "./use-error-handler";
 import { isImageFile, isSupportedImageType, formatFileSize } from "@/lib/utils";
 
 export type UploadStatus = "idle" | "uploading" | "success" | "error";
@@ -31,6 +32,8 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
   } = options;
 
   const { toast } = useToast();
+  const { handleValidationError, handleUploadError, clearErrorsByType } =
+    useErrorHandler();
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -125,13 +128,12 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
   // 模拟上传过程
   const uploadFiles = useCallback(async () => {
     if (files.length === 0) {
-      toast({
-        title: "请选择文件",
-        description: "请先选择要上传的文件",
-        variant: "destructive",
-      });
+      handleValidationError("请先选择要上传的文件");
       return;
     }
+
+    // 清除之前的上传错误
+    clearErrorsByType("upload");
 
     // 更新状态为上传中
     setFiles((prev) =>
@@ -163,9 +165,15 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
         }))
       );
 
+      // 模拟随机上传失败（用于演示错误处理）
+      if (Math.random() < 0.3) {
+        throw new Error("网络连接不稳定，上传失败");
+      }
+
       toast({
         title: "上传成功",
-        description: `成功上传 ${files.length} 个文件`,
+        description: `成功上传 ${files.length} 个文件，开始进行人脸检测...`,
+        variant: "default",
       });
 
       onUploadComplete?.(files);
@@ -180,15 +188,18 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
         }))
       );
 
-      toast({
-        title: "上传失败",
-        description: errorMessage,
-        variant: "destructive",
-      });
-
+      handleUploadError(error);
       onUploadError?.(errorMessage);
     }
-  }, [files, toast, onUploadComplete, onUploadError]);
+  }, [
+    files,
+    toast,
+    onUploadComplete,
+    onUploadError,
+    handleValidationError,
+    handleUploadError,
+    clearErrorsByType,
+  ]);
 
   // 拖拽事件处理
   const handleDragEnter = useCallback((e: React.DragEvent) => {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Upload, Grid3X3 } from "lucide-react";
+import { Search, Upload, Grid3X3, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
@@ -31,6 +31,12 @@ export function Header() {
               <Link href="/components" className="flex items-center gap-2">
                 <Grid3X3 className="h-4 w-4" />
                 组件展示
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/error-demo" className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                错误演示
               </Link>
             </Button>
           </nav>
