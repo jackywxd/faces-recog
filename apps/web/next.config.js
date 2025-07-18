@@ -1,3 +1,10 @@
+const {
+  config,
+  environment,
+  getAppInfo,
+  getApiBaseUrl,
+} = require("./env.config");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Cloudflare Pages 配置
@@ -25,10 +32,30 @@ const nextConfig = {
     tsconfigPath: "./tsconfig.json",
   },
 
-  // 环境变量
+  // 环境变量注入
   env: {
-    NEXT_PUBLIC_APP_NAME: "Photo Face Recognition",
-    NEXT_PUBLIC_APP_DESCRIPTION: "基于 AI 的照片人脸识别系统",
+    // 应用信息
+    NEXT_PUBLIC_APP_NAME: config.APP_NAME,
+    NEXT_PUBLIC_APP_DESCRIPTION: config.APP_DESCRIPTION,
+    NEXT_PUBLIC_APP_VERSION: config.APP_VERSION,
+    NEXT_PUBLIC_ENVIRONMENT: environment,
+
+    // API 配置
+    NEXT_PUBLIC_API_BASE_URL: config.API_BASE_URL,
+    NEXT_PUBLIC_API_TIMEOUT: config.API_TIMEOUT.toString(),
+
+    // 文件上传配置
+    NEXT_PUBLIC_MAX_FILE_SIZE: config.MAX_FILE_SIZE.toString(),
+    NEXT_PUBLIC_SUPPORTED_FORMATS: config.SUPPORTED_FORMATS.join(","),
+
+    // 功能开关
+    NEXT_PUBLIC_ENABLE_DEBUG: config.ENABLE_DEBUG.toString(),
+    NEXT_PUBLIC_ENABLE_ANALYTICS: config.ENABLE_ANALYTICS.toString(),
+    NEXT_PUBLIC_ENABLE_ERROR_TRACKING: config.ENABLE_ERROR_TRACKING.toString(),
+
+    // UI 配置
+    NEXT_PUBLIC_DEFAULT_THEME: config.DEFAULT_THEME,
+    NEXT_PUBLIC_ANIMATION_ENABLED: config.ANIMATION_ENABLED.toString(),
   },
 
   // 编译配置

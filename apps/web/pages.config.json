@@ -1,0 +1,84 @@
+{
+  "build": {
+    "command": "npm run build",
+    "destination": "out",
+    "rootDir": "apps/web",
+    "buildTimeout": 600,
+    "env": {
+      "NODE_VERSION": "18.17.0",
+      "NPM_VERSION": "9.6.7"
+    }
+  },
+  "preview": {
+    "destination": "out",
+    "compatibilityDate": "2024-12-01",
+    "compatibilityFlags": ["nodejs_compat"]
+  },
+  "production": {
+    "destination": "out",
+    "compatibilityDate": "2024-12-01",
+    "compatibilityFlags": ["nodejs_compat"],
+    "customDomains": ["face-recog.com", "www.face-recog.com"]
+  },
+  "headers": [
+    {
+      "source": "/**/*",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/api/*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/_next/static/**/*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/app",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+  "functions": {
+    "compatibilityDate": "2024-12-01",
+    "compatibilityFlags": ["nodejs_compat"]
+  }
+}

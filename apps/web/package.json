@@ -6,9 +6,19 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:staging": "NODE_ENV=production NEXT_PUBLIC_ENV=staging next build",
+    "build:production": "NODE_ENV=production NEXT_PUBLIC_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "preview": "next build && npx serve@latest out",
+    "deploy:staging": "node scripts/deploy-pages.cjs staging",
+    "deploy:production": "node scripts/deploy-pages.cjs production",
+    "deploy:preview:staging": "node scripts/deploy-pages.cjs staging --preview",
+    "deploy:preview:production": "node scripts/deploy-pages.cjs production --preview",
+    "deploy:check:staging": "node scripts/deploy-pages.cjs staging --check",
+    "deploy:check:production": "node scripts/deploy-pages.cjs production --check",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@face-recog/database": "workspace:*",
