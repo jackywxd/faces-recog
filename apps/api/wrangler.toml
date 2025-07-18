@@ -1,0 +1,201 @@
+# 人脸识别系统 API - Cloudflare Workers 配置
+# 项目: Face Recognition System
+# 环境: Development, Staging, Production
+
+# =============================================================================
+# 基础配置
+# =============================================================================
+
+name = "face-recog-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Worker 配置
+usage_model = "bundled"
+
+# 资源限制配置
+[limits]
+cpu_ms = 50000        # CPU 时间限制 (50秒)
+memory_mb = 128       # 内存限制 (128MB)
+
+# =============================================================================
+# 开发环境配置
+# =============================================================================
+
+[vars]
+ENVIRONMENT = "development"
+API_VERSION = "1.0.0"
+DEBUG_MODE = "true"
+MAX_FILE_SIZE = "10485760"  # 10MB
+SUPPORTED_FORMATS = "image/jpeg,image/png,image/webp"
+
+# R2 对象存储绑定
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "face-recog-photos-dev"
+
+# =============================================================================
+# 本地开发服务器配置
+# =============================================================================
+
+[dev]
+port = 8787
+local_protocol = "http"
+upstream_protocol = "https"
+host = "localhost"
+compatibility_date = "2024-12-01"
+
+# =============================================================================
+# 构建配置
+# =============================================================================
+
+[build]
+command = "pnpm run build"
+cwd = "."
+watch_dir = ["src"]
+
+# =============================================================================
+# 测试环境配置
+# =============================================================================
+
+[env.staging]
+name = "face-recog-api-staging"
+route = { pattern = "api-staging.face-recog.com/*", zone_name = "face-recog.com" }
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+API_VERSION = "1.0.0"
+DEBUG_MODE = "false"
+MAX_FILE_SIZE = "10485760"
+SUPPORTED_FORMATS = "image/jpeg,image/png,image/webp"
+
+[[env.staging.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "face-recog-photos-staging"
+
+# D1 数据库 (迭代3启用)
+# [[env.staging.d1_databases]]
+# binding = "DB"
+# database_name = "face-recog-db-staging"
+# database_id = "your-staging-db-id"
+
+# =============================================================================
+# 生产环境配置
+# =============================================================================
+
+[env.production]
+name = "face-recog-api-prod"
+route = { pattern = "api.face-recog.com/*", zone_name = "face-recog.com" }
+
+[env.production.vars]
+ENVIRONMENT = "production"
+API_VERSION = "1.0.0"
+DEBUG_MODE = "false"
+MAX_FILE_SIZE = "10485760"
+SUPPORTED_FORMATS = "image/jpeg,image/png,image/webp"
+SENTRY_DSN = ""  # 在生产环境中设置错误监控
+
+[[env.production.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "face-recog-photos-prod"
+
+# D1 生产数据库 (迭代3启用)
+# [[env.production.d1_databases]]
+# binding = "DB"
+# database_name = "face-recog-db-prod"
+# database_id = "your-production-db-id"
+
+# 生产环境资源限制 (更高配置)
+[env.production.limits]
+cpu_ms = 100000      # 100秒 CPU 时间
+memory_mb = 256      # 256MB 内存
+
+# =============================================================================
+# 容器服务配置 (迭代2会启用)
+# =============================================================================
+
+# 开发环境容器
+# [[containers]]
+# class_name = "FaceDetectorContainer"
+# image = "../face-detector/Dockerfile"
+# instances = 2
+# name = "face-detector-dev"
+
+# 生产环境容器
+# [[env.production.containers]]
+# class_name = "FaceDetectorContainer"
+# image = "../face-detector/Dockerfile"
+# instances = 10
+# name = "face-detector-prod"
+
+# =============================================================================
+# Durable Objects 配置 (迭代2会启用)
+# =============================================================================
+
+# [durable_objects]
+# bindings = [
+#   { name = "FACE_DETECTOR", class_name = "FaceDetectorContainer" }
+# ]
+
+# =============================================================================
+# 安全和监控配置
+# =============================================================================
+
+# KV 命名空间 (用于缓存和会话存储)
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "your-cache-kv-id"
+
+# 分析和监控
+[analytics_engine_datasets]
+# binding = "ANALYTICS"
+# dataset = "face_recog_analytics"
+
+# =============================================================================
+# 部署和CI/CD配置
+# =============================================================================
+
+# 触发器配置
+[triggers]
+crons = []  # 可以添加定时任务，如清理临时文件
+
+# 部署配置
+[deployment]
+# 生产部署需要手动确认
+# production_branch = "main"
+# preview_branch_includes = ["develop", "feature/*"]
+# preview_branch_excludes = ["main"]
+
+# =============================================================================
+# 开发工具配置
+# =============================================================================
+
+# 类型检查配置
+[miniflare]
+# 本地开发时的额外配置
+kv_persist = true
+d1_persist = true
+r2_persist = true
+
+# =============================================================================
+# 备注说明
+# =============================================================================
+
+# 使用方法:
+# 开发环境: pnpm run dev (使用默认配置)
+# 测试环境: wrangler deploy --env staging
+# 生产环境: wrangler deploy --env production
+#
+# 环境变量设置:
+# wrangler secret put SENTRY_DSN --env production
+# wrangler secret put DATABASE_PASSWORD --env production
+#
+# R2 存储桶创建:
+# wrangler r2 bucket create face-recog-photos-dev
+# wrangler r2 bucket create face-recog-photos-staging  
+# wrangler r2 bucket create face-recog-photos-prod
+#
+# D1 数据库创建 (迭代3):
+# wrangler d1 create face-recog-db-staging
+# wrangler d1 create face-recog-db-prod 

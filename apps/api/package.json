@@ -5,11 +5,24 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "build": "wrangler deploy --dry-run",
+    "build": "tsc && echo 'Build completed'",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "test": "vitest"
+    "test": "vitest",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "preview": "wrangler deploy --dry-run",
+    "preview:staging": "wrangler deploy --env staging --dry-run",
+    "preview:production": "wrangler deploy --env production --dry-run",
+    "logs": "wrangler tail",
+    "logs:staging": "wrangler tail --env staging",
+    "logs:production": "wrangler tail --env production",
+    "setup:r2": "node scripts/setup-r2.cjs",
+    "setup:secrets": "node scripts/setup-secrets.cjs",
+    "check": "node scripts/deploy-check.cjs",
+    "check:staging": "node scripts/deploy-check.cjs staging",
+    "check:production": "node scripts/deploy-check.cjs production"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.2.1",
