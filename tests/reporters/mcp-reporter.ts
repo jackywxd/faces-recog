@@ -17,6 +17,13 @@ class MCPReporter implements Reporter {
   private outputDir: string;
 
   constructor(options: { outputDir?: string } = {}) {
+    // 在CI环境中禁用文件输出
+    if (process.env.CI) {
+      this.outputDir = "";
+      console.log("🔧 CI环境检测到，禁用MCP报告器文件输出");
+      return;
+    }
+
     this.outputDir = options.outputDir || "test-results/mcp";
     // 确保输出目录存在
     try {
@@ -25,6 +32,12 @@ class MCPReporter implements Reporter {
       console.warn(`⚠️ 无法创建输出目录 ${this.outputDir}:`, error.message);
       // 使用临时目录作为备选
       this.outputDir = process.env.TEMP || process.env.TMP || "/tmp";
+      try {
+        fs.mkdirSync(this.outputDir, { recursive: true });
+      } catch (secondError) {
+        console.warn(`⚠️ 备选目录也无法创建:`, secondError.message);
+        this.outputDir = "";
+      }
     }
   }
 
@@ -113,15 +126,17 @@ class MCPReporter implements Reporter {
     };
 
     // 保存到文件供 MCP 客户端读取
-    const filename = `test_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}.json`;
-    const filepath = path.join(this.outputDir, filename);
+    if (this.outputDir) {
+      const filename = `test_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}.json`;
+      const filepath = path.join(this.outputDir, filename);
 
-    try {
-      fs.writeFileSync(filepath, JSON.stringify(mcpMessage, null, 2));
-    } catch (error) {
-      console.warn(`⚠️ 无法写入测试结果文件:`, error.message);
+      try {
+        fs.writeFileSync(filepath, JSON.stringify(mcpMessage, null, 2));
+      } catch (error) {
+        console.warn(`⚠️ 无法写入测试结果文件:`, error.message);
+      }
     }
 
     // 发送到 Cursor (如果有 MCP 连接)
@@ -141,21 +156,27 @@ class MCPReporter implements Reporter {
     };
 
     // 保存摘要文件
-    const summaryPath = path.join(this.outputDir, "summary.json");
-    try {
-      fs.writeFileSync(summaryPath, JSON.stringify(mcpMessage, null, 2));
-    } catch (error) {
-      console.warn(`⚠️ 无法写入摘要文件:`, error.message);
-    }
+    if (this.outputDir) {
+      const summaryPath = path.join(this.outputDir, "summary.json");
+      try {
+        fs.writeFileSync(summaryPath, JSON.stringify(mcpMessage, null, 2));
+      } catch (error) {
+        console.warn(`⚠️ 无法写入摘要文件:`, error.message);
+      }
 
-    // 生成 Cursor 友好的报告
-    const cursorReport = this.generateCursorReport(summary);
-    const reportPath = path.join(this.outputDir, "cursor-report.md");
-    try {
-      fs.writeFileSync(reportPath, cursorReport);
-      console.log(`📄 报告已生成: ${reportPath}`);
-    } catch (error) {
-      console.warn(`⚠️ 无法写入报告文件:`, error.message);
+      // 生成 Cursor 友好的报告
+      const cursorReport = this.generateCursorReport(summary);
+      const reportPath = path.join(this.outputDir, "cursor-report.md");
+      try {
+        fs.writeFileSync(reportPath, cursorReport);
+        console.log(`📄 报告已生成: ${reportPath}`);
+      } catch (error) {
+        console.warn(`⚠️ 无法写入报告文件:`, error.message);
+      }
+    } else {
+      // 在CI环境中只输出到控制台
+      console.log("📋 测试摘要 (CI模式):");
+      console.log(JSON.stringify(mcpMessage, null, 2));
     }
   }
 
@@ -209,11 +230,13 @@ ${this.testResults
       })),
     };
 
-    const reportPath = path.join(this.outputDir, "mcp-report.json");
-    try {
-      fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    } catch (error) {
-      console.warn(`⚠️ 无法写入 MCP 报告文件:`, error.message);
+    if (this.outputDir) {
+      const reportPath = path.join(this.outputDir, "mcp-report.json");
+      try {
+        fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+      } catch (error) {
+        console.warn(`⚠️ 无法写入 MCP 报告文件:`, error.message);
+      }
     }
   }
 
