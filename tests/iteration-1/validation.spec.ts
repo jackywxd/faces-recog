@@ -11,11 +11,25 @@ test.describe("迭代 1: 核心功能验证", () => {
   });
 
   test("验证API服务可访问", async ({ page }) => {
-    const response = await page.request.get("http://localhost:8787/api/health");
-    expect(response.status()).toBe(200);
+    // 使用环境变量中的API URL，如果没有则使用默认值
+    const apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8787";
+    const healthUrl = `${apiBaseUrl}/api/health`;
 
-    const data = await response.json();
-    expect(data.status).toBe("healthy");
+    console.log(`正在检查API健康状态: ${healthUrl}`);
+    console.log(`环境变量 API_BASE_URL: ${process.env.API_BASE_URL}`);
+    console.log(`环境变量 TEST_ENV: ${process.env.TEST_ENV}`);
+
+    try {
+      const response = await page.request.get(healthUrl);
+      expect(response.status()).toBe(200);
+
+      const data = await response.json();
+      expect(data.status).toBe("healthy");
+    } catch (error) {
+      console.error(`API请求失败: ${error.message}`);
+      console.error(`请求URL: ${healthUrl}`);
+      throw error;
+    }
   });
 
   test("验证文件上传界面", async ({ page }) => {
