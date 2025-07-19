@@ -7,13 +7,12 @@ const {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Cloudflare Pages 配置
-  output: "export",
+  // Cloudflare Pages SSR 配置
+  // 移除 output: "export" 以支持 SSR
   trailingSlash: true,
   skipTrailingSlashRedirect: true,
-  distDir: "out",
 
-  // 图像优化配置 (Cloudflare Pages 不支持 Next.js 图像优化)
+  // 图像优化配置
   images: {
     unoptimized: true,
     remotePatterns: [
