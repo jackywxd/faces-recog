@@ -24,25 +24,25 @@ const DEPLOY_CONFIG = {
   staging: {
     projectName: "face-recog-staging",
     description: "人脸识别系统 - 测试环境",
-    domains: ["pages-staging.face-recog.com"],
+    domains: ["pages-staging.colorsofthewind.club"],
     buildCommand: "npm run build:staging",
     environment: "staging",
     variables: {
       NODE_ENV: "production",
       NEXT_PUBLIC_ENV: "staging",
-      NEXT_PUBLIC_API_BASE_URL: "https://api-staging.face-recog.com",
+      NEXT_PUBLIC_API_BASE_URL: "https://api-staging.colorsofthewind.club",
     },
   },
   production: {
     projectName: "face-recog-production",
     description: "人脸识别系统 - 生产环境",
-    domains: ["face-recog.com", "www.face-recog.com"],
+    domains: ["colorsofthewind.club", "www.colorsofthewind.club"],
     buildCommand: "npm run build:production",
     environment: "production",
     variables: {
       NODE_ENV: "production",
       NEXT_PUBLIC_ENV: "production",
-      NEXT_PUBLIC_API_BASE_URL: "https://api.face-recog.com",
+      NEXT_PUBLIC_API_BASE_URL: "https://api.colorsofthewind.club",
     },
   },
 };

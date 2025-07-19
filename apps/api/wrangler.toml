@@ -61,7 +61,7 @@ watch_dir = ["src"]
 
 [env.staging]
 name = "face-recog-api-staging"
-route = { pattern = "api-staging.face-recog.com/*", zone_name = "face-recog.com" }
+route = { pattern = "api-staging.colorsofthewind.club/*", zone_name = "colorsofthewind.club" }
 
 [env.staging.vars]
 ENVIRONMENT = "staging"
@@ -86,7 +86,7 @@ bucket_name = "face-recog-photos-staging"
 
 [env.production]
 name = "face-recog-api-prod"
-route = { pattern = "api.face-recog.com/*", zone_name = "face-recog.com" }
+route = { pattern = "api.colorsofthewind.club/*", zone_name = "colorsofthewind.club" }
 
 [env.production.vars]
 ENVIRONMENT = "production"

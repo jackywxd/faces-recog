@@ -53,7 +53,7 @@ const configs = {
     APP_VERSION: "1.0.0-staging",
 
     // API 配置
-    API_BASE_URL: "https://api-staging.face-recog.com",
+    API_BASE_URL: "https://api-staging.colorsofthewind.club",
     API_TIMEOUT: 30000,
 
     // 文件上传配置
@@ -81,7 +81,7 @@ const configs = {
     APP_VERSION: "1.0.0",
 
     // API 配置
-    API_BASE_URL: "https://api.face-recog.com",
+    API_BASE_URL: "https://api.colorsofthewind.club",
     API_TIMEOUT: 30000,
 
     // 文件上传配置
