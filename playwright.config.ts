@@ -22,7 +22,7 @@ export default defineConfig({
 
   // 报告配置 - 支持多种格式用于 Cursor 集成
   reporter: [
-    ["html", { outputFolder: "test-results/html-report" }],
+    ["html", { outputFolder: "playwright-report" }],
     ["json", { outputFile: "test-results/test-results.json" }],
     ["junit", { outputFile: "test-results/junit.xml" }],
     ["line"],
