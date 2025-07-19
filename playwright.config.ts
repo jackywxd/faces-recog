@@ -93,20 +93,25 @@ export default defineConfig({
   ],
 
   // Web 服务器配置（用于本地开发）
-  webServer: [
-    {
-      command: "pnpm run dev:web",
-      port: 3000,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120000,
-    },
-    {
-      command: "pnpm run dev:api",
-      port: 8787,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120000,
-    },
-  ],
+  // 在CI环境中禁用webServer，由GitHub Actions手动管理
+  ...(process.env.CI
+    ? {}
+    : {
+        webServer: [
+          {
+            command: "pnpm run dev:web",
+            port: 3000,
+            reuseExistingServer: true,
+            timeout: 120000,
+          },
+          {
+            command: "pnpm run dev:api",
+            port: 8787,
+            reuseExistingServer: true,
+            timeout: 120000,
+          },
+        ],
+      }),
 
   // 全局设置和清理
   globalSetup: "./tests/setup/global-setup.ts",

@@ -52,22 +52,49 @@ jobs:
         run: pnpm run lint || true
         continue-on-error: true
 
+      - name: 检查端口占用
+        if: matrix.environment == 'local'
+        run: |
+          echo "检查端口占用情况..."
+
+          # 检查3000端口
+          if lsof -i :3000 > /dev/null 2>&1; then
+            echo "⚠️  端口3000已被占用:"
+            lsof -i :3000
+            echo "尝试释放端口..."
+            pkill -f "dev:web" || true
+            sleep 2
+          else
+            echo "✅ 端口3000可用"
+          fi
+
+          # 检查8787端口
+          if lsof -i :8787 > /dev/null 2>&1; then
+            echo "⚠️  端口8787已被占用:"
+            lsof -i :8787
+            echo "尝试释放端口..."
+            pkill -f "dev:api" || true
+            sleep 2
+          else
+            echo "✅ 端口8787可用"
+          fi
+
       - name: 启动测试服务器
         if: matrix.environment == 'local'
         run: |
+          echo "启动本地测试服务器..."
+
           # 启动前端开发服务器
           pnpm run dev:web > web.log 2>&1 &
           echo "WEB_SERVER_PID=$!" >> $GITHUB_ENV
+          echo "前端服务器PID: $!"
 
           # 启动API服务器
           pnpm run dev:api > api.log 2>&1 &
           echo "API_SERVER_PID=$!" >> $GITHUB_ENV
-        env:
-          NODE_ENV: test
+          echo "API服务器PID: $!"
 
-      - name: 等待服务启动
-        if: matrix.environment == 'local'
-        run: |
+          # 等待服务启动
           echo "等待前端服务启动..."
           npx wait-on http://localhost:3000 --timeout 180000 --interval 2000
           echo "前端服务已启动"
@@ -80,8 +107,11 @@ jobs:
           sleep 10
 
           # 验证服务健康状态
-          curl -f http://localhost:3000/ || echo "前端服务健康检查失败"
-          curl -f http://localhost:8787/health || echo "API服务健康检查失败"
+          echo "验证服务健康状态..."
+          curl -f http://localhost:3000/ && echo "✅ 前端服务健康检查通过" || echo "❌ 前端服务健康检查失败"
+          curl -f http://localhost:8787/health && echo "✅ API服务健康检查通过" || echo "❌ API服务健康检查失败"
+        env:
+          NODE_ENV: test
 
       - name: 设置环境变量
         run: |
@@ -116,12 +146,21 @@ jobs:
       - name: 停止本地服务器
         if: matrix.environment == 'local'
         run: |
+          echo "停止本地测试服务器..."
+
           if [ ! -z "$WEB_SERVER_PID" ]; then
-            kill $WEB_SERVER_PID || true
+            echo "停止前端服务器 (PID: $WEB_SERVER_PID)..."
+            kill $WEB_SERVER_PID || echo "前端服务器已停止或不存在"
           fi
+
           if [ ! -z "$API_SERVER_PID" ]; then
-            kill $API_SERVER_PID || true
+            echo "停止API服务器 (PID: $API_SERVER_PID)..."
+            kill $API_SERVER_PID || echo "API服务器已停止或不存在"
           fi
+
+          # 确保端口释放
+          sleep 2
+          echo "服务器停止完成"
 
       - name: 上传测试报告
         uses: actions/upload-artifact@v4
