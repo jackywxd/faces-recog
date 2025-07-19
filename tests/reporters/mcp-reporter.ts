@@ -12,14 +12,20 @@ import * as path from "path";
  * 将测试结果格式化并发送到 Cursor 编辑器
  */
 class MCPReporter implements Reporter {
-  private testResults: TestResult[] = [];
+  private testResults: Array<TestResult & { testCase?: TestCase }> = [];
   private startTime: number = 0;
   private outputDir: string;
 
   constructor(options: { outputDir?: string } = {}) {
     this.outputDir = options.outputDir || "test-results/mcp";
     // 确保输出目录存在
-    fs.mkdirSync(this.outputDir, { recursive: true });
+    try {
+      fs.mkdirSync(this.outputDir, { recursive: true });
+    } catch (error) {
+      console.warn(`⚠️ 无法创建输出目录 ${this.outputDir}:`, error.message);
+      // 使用临时目录作为备选
+      this.outputDir = process.env.TEMP || process.env.TMP || "/tmp";
+    }
   }
 
   onBegin(config: any, suite: any) {
@@ -29,7 +35,9 @@ class MCPReporter implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    this.testResults.push(result);
+    // 保存测试用例信息
+    const resultWithTestCase = { ...result, testCase: test };
+    this.testResults.push(resultWithTestCase);
 
     const status = this.getStatusEmoji(result.status);
     const duration = `${result.duration}ms`;
@@ -76,7 +84,9 @@ class MCPReporter implements Reporter {
       passed: this.testResults.filter((r) => r.status === "passed").length,
       failed: this.testResults.filter((r) => r.status === "failed").length,
       skipped: this.testResults.filter((r) => r.status === "skipped").length,
-      flaky: this.testResults.filter((r) => r.status === "flaky").length,
+      flaky: this.testResults.filter(
+        (r) => r.status === "failed" && r.retry > 0
+      ).length,
     };
 
     return {
@@ -108,7 +118,11 @@ class MCPReporter implements Reporter {
       .substr(2, 9)}.json`;
     const filepath = path.join(this.outputDir, filename);
 
-    fs.writeFileSync(filepath, JSON.stringify(mcpMessage, null, 2));
+    try {
+      fs.writeFileSync(filepath, JSON.stringify(mcpMessage, null, 2));
+    } catch (error) {
+      console.warn(`⚠️ 无法写入测试结果文件:`, error.message);
+    }
 
     // 发送到 Cursor (如果有 MCP 连接)
     if (process.env.MCP_ENDPOINT) {
@@ -128,14 +142,21 @@ class MCPReporter implements Reporter {
 
     // 保存摘要文件
     const summaryPath = path.join(this.outputDir, "summary.json");
-    fs.writeFileSync(summaryPath, JSON.stringify(mcpMessage, null, 2));
+    try {
+      fs.writeFileSync(summaryPath, JSON.stringify(mcpMessage, null, 2));
+    } catch (error) {
+      console.warn(`⚠️ 无法写入摘要文件:`, error.message);
+    }
 
     // 生成 Cursor 友好的报告
     const cursorReport = this.generateCursorReport(summary);
     const reportPath = path.join(this.outputDir, "cursor-report.md");
-    fs.writeFileSync(reportPath, cursorReport);
-
-    console.log(`📄 报告已生成: ${reportPath}`);
+    try {
+      fs.writeFileSync(reportPath, cursorReport);
+      console.log(`📄 报告已生成: ${reportPath}`);
+    } catch (error) {
+      console.warn(`⚠️ 无法写入报告文件:`, error.message);
+    }
   }
 
   private generateCursorReport(summary: any): string {
@@ -162,7 +183,7 @@ ${this.testResults
   .map(
     (result) =>
       `- ${this.getStatusEmoji(result.status)} ${
-        result.test?.title || "Unknown"
+        result.testCase?.title || "Unknown"
       } (${result.duration}ms)`
   )
   .join("\n")}
@@ -180,7 +201,7 @@ ${this.testResults
       summary,
       duration,
       results: this.testResults.map((result) => ({
-        title: result.test?.title,
+        title: result.testCase?.title || "Unknown",
         status: result.status,
         duration: result.duration,
         error: result.error?.message,
@@ -189,7 +210,11 @@ ${this.testResults
     };
 
     const reportPath = path.join(this.outputDir, "mcp-report.json");
-    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    try {
+      fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    } catch (error) {
+      console.warn(`⚠️ 无法写入 MCP 报告文件:`, error.message);
+    }
   }
 
   private async sendToMCPEndpoint(message: any) {
