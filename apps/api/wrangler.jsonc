@@ -25,25 +25,25 @@
   //   }
   // ],
 
-  // 容器服务绑定 (迭代2会启用)
-  // "containers": [
-  //   {
-  //     "class_name": "FaceDetectorContainer",
-  //     "image": "../face-detector/Dockerfile",
-  //     "instances": 5,
-  //     "name": "face-detector-service"
-  //   }
-  // ],
+  // 容器服务绑定
+  "containers": [
+    {
+      "class_name": "FaceDetectorContainer",
+      "image": "../face-detector/Dockerfile",
+      "instances": 5,
+      "name": "face-detector-service"
+    }
+  ],
 
-  // Durable Objects 绑定 (迭代2会启用)
-  // "durable_objects": {
-  //   "bindings": [
-  //     {
-  //       "name": "FACE_DETECTOR",
-  //       "class_name": "FaceDetectorContainer"
-  //     }
-  //   ]
-  // },
+  // Durable Objects 绑定
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "FACE_DETECTOR",
+        "class_name": "FaceDetectorContainer"
+      }
+    ]
+  },
 
   // 开发环境配置
   "dev": {

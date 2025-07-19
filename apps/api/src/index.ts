@@ -6,6 +6,7 @@ import { secureHeaders } from "hono/secure-headers";
 
 import { healthRoutes } from "./routes/health";
 import { uploadRoutes } from "./routes/upload";
+import { faceDetectionRoutes } from "./routes/face-detection";
 // 创建 Hono 应用实例
 const app = new Hono();
 
@@ -79,6 +80,7 @@ app.get("/", (c) => {
 // 注册路由
 app.route("/api/health", healthRoutes);
 app.route("/api/upload", uploadRoutes);
+app.route("/api", faceDetectionRoutes);
 
 // 导出应用实例
 export default app;

@@ -6,9 +6,9 @@
 
 ### 进度统计
 - **总任务数**: 72
-- **已完成**: 16
+- **已完成**: 23
 - **进行中**: 0  
-- **待开始**: 56
+- **待开始**: 49
 - **自动化测试覆盖**: 5个迭代，35个测试用例
 
 ---
@@ -147,49 +147,56 @@
 
 ### 容器服务搭建 (apps/face-detector)
 
-- [ ] **TASK-2.1** 创建容器服务结构
+- [x] **TASK-2.1** 创建容器服务结构 ✅
   - 创建 `apps/face-detector` 目录
   - 设置 Express.js 服务器
   - 配置 TypeScript 和构建流程
   - **估时**: 2小时
+  - **完成时间**: 2024-12-30
 
-- [ ] **TASK-2.2** 集成 @vladmandic/face-api
+- [x] **TASK-2.2** 集成 @vladmandic/face-api ✅
   - 安装 face-api.js 和依赖
   - 配置 Canvas 环境支持
   - 下载和配置 AI 模型文件
   - **估时**: 4小时
+  - **完成时间**: 2024-12-30
 
-- [ ] **TASK-2.3** 实现面部检测服务
+- [x] **TASK-2.3** 实现面部检测服务 ✅
   - 创建 `FaceDetectionService` 类
   - 实现模型加载和缓存
   - 添加面部检测算法
   - **估时**: 4小时
+  - **完成时间**: 2024-12-30
 
-- [ ] **TASK-2.4** 创建 Dockerfile 配置
+- [x] **TASK-2.4** 创建 Dockerfile 配置 ✅
   - 配置 Node.js Alpine 基础镜像
   - 安装系统依赖 (Cairo, Canvas等)
   - 优化镜像大小和构建时间
   - **估时**: 3小时
+  - **完成时间**: 2024-12-30
 
 ### Cloudflare Containers 集成
 
-- [ ] **TASK-2.5** 实现 Container 类
+- [x] **TASK-2.5** 实现 Container 类 ✅
   - 创建 `FaceDetectorContainer` 继承 `Container`
   - 配置容器生命周期管理
   - 实现 `onStart`, `onStop`, `onError` 钩子
   - **估时**: 3小时
+  - **完成时间**: 2024-12-30
 
-- [ ] **TASK-2.6** 配置 Worker 到 Container 通信
+- [x] **TASK-2.6** 配置 Worker 到 Container 通信 ✅
   - 更新 `wrangler.jsonc` 容器配置
   - 实现 Durable Object 绑定
   - 配置容器路由和负载均衡
   - **估时**: 3小时
+  - **完成时间**: 2024-12-30
 
-- [ ] **TASK-2.7** 实现面部检测 API 端点
+- [x] **TASK-2.7** 实现面部检测 API 端点 ✅
   - 创建 `POST /api/detect-faces` 端点
   - 实现图像接收和处理
   - 返回检测结果 (边界框、置信度)
   - **估时**: 3小时
+  - **完成时间**: 2024-12-30
 
 ### 前端检测结果展示
 
