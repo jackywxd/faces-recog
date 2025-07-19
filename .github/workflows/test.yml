@@ -34,7 +34,10 @@ jobs:
           cache: "pnpm"
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          echo "依赖安装完成，检查lockfile状态..."
+          pnpm list --depth=0
 
       - name: 安装 Playwright 浏览器
         run: npx playwright install --with-deps
@@ -53,11 +56,11 @@ jobs:
         if: matrix.environment == 'local'
         run: |
           # 启动前端开发服务器
-          pnpm run dev:web &
+          pnpm run dev:web > web.log 2>&1 &
           echo "WEB_SERVER_PID=$!" >> $GITHUB_ENV
 
           # 启动API服务器
-          pnpm run dev:api &
+          pnpm run dev:api > api.log 2>&1 &
           echo "API_SERVER_PID=$!" >> $GITHUB_ENV
         env:
           NODE_ENV: test
@@ -65,17 +68,50 @@ jobs:
       - name: 等待服务启动
         if: matrix.environment == 'local'
         run: |
-          npx wait-on http://localhost:3000 --timeout 120000
-          npx wait-on http://localhost:8787 --timeout 120000
+          echo "等待前端服务启动..."
+          npx wait-on http://localhost:3000 --timeout 180000 --interval 2000
+          echo "前端服务已启动"
+
+          echo "等待API服务启动..."
+          npx wait-on http://localhost:8787 --timeout 180000 --interval 2000
+          echo "API服务已启动"
+
+          # 额外等待确保服务完全就绪
+          sleep 10
+
+          # 验证服务健康状态
+          curl -f http://localhost:3000/ || echo "前端服务健康检查失败"
+          curl -f http://localhost:8787/health || echo "API服务健康检查失败"
+
+      - name: 设置环境变量
+        run: |
+          if [ "${{ matrix.environment }}" = "local" ]; then
+            echo "TEST_BASE_URL=http://localhost:3000" >> $GITHUB_ENV
+            echo "API_BASE_URL=http://localhost:8787" >> $GITHUB_ENV
+          else
+            echo "TEST_BASE_URL=https://251f1a66.face-recog-web-staging.pages.dev" >> $GITHUB_ENV
+            echo "API_BASE_URL=https://face-recog-api-staging.small-tooth-cc10.workers.dev" >> $GITHUB_ENV
+          fi
+          echo "TEST_ENV=${{ matrix.environment }}" >> $GITHUB_ENV
+          echo "TEST_SESSION_ID=${{ github.run_id }}-${{ matrix.browser }}-${{ matrix.environment }}" >> $GITHUB_ENV
 
       - name: 运行 Playwright 测试
-        run: npx playwright test --project=${{ matrix.browser }} --reporter=line
+        run: |
+          echo "开始运行 Playwright 测试..."
+          echo "浏览器: ${{ matrix.browser }}"
+          echo "环境: ${{ matrix.environment }}"
+          echo "测试URL: ${{ env.TEST_BASE_URL }}"
+          echo "API URL: ${{ env.API_BASE_URL }}"
+
+          npx playwright test --project=${{ matrix.browser }} --reporter=line
+
+          echo "Playwright 测试完成"
         env:
           CI: true
-          TEST_ENV: ${{ matrix.environment }}
-          TEST_BASE_URL: ${{ matrix.environment == 'local' && 'http://localhost:3000' || 'https://251f1a66.face-recog-web-staging.pages.dev' }}
-          API_BASE_URL: ${{ matrix.environment == 'local' && 'http://localhost:8787' || 'https://face-recog-api-staging.small-tooth-cc10.workers.dev' }}
-          TEST_SESSION_ID: ${{ github.run_id }}-${{ matrix.browser }}-${{ matrix.environment }}
+          TEST_ENV: ${{ env.TEST_ENV }}
+          TEST_BASE_URL: ${{ env.TEST_BASE_URL }}
+          API_BASE_URL: ${{ env.API_BASE_URL }}
+          TEST_SESSION_ID: ${{ env.TEST_SESSION_ID }}
 
       - name: 停止本地服务器
         if: matrix.environment == 'local'
@@ -92,15 +128,27 @@ jobs:
         if: always()
         with:
           name: playwright-report-${{ matrix.browser }}-${{ matrix.environment }}
-          path: test-results/
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 30
+
+      - name: 上传服务日志
+        if: matrix.environment == 'local' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs-${{ matrix.browser }}-${{ matrix.environment }}
+          path: |
+            web.log
+            api.log
+          retention-days: 7
 
       - name: 上传截图
         uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: screenshots-${{ matrix.browser }}-${{ matrix.environment }}
-          path: test-results/screenshots/
+          path: test-results/
           retention-days: 7
 
   # 性能和负载测试作业
@@ -126,7 +174,10 @@ jobs:
           cache: "pnpm"
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          echo "依赖安装完成，检查lockfile状态..."
+          pnpm list --depth=0
 
       - name: 安装 Playwright 浏览器
         run: npx playwright install --with-deps
@@ -190,6 +241,12 @@ jobs:
           echo "1. 检查测试日志和截图"
           echo "2. 验证测试环境状态"
           echo "3. 检查代码变更影响"
+
+      - name: 启用调试模式
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
 
 # 环境变量配置
 env:
