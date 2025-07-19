@@ -34,23 +34,40 @@ export const PhotoSchema = z.object({
 export type Photo = z.infer<typeof PhotoSchema>;
 
 // 人脸检测相关类型
-export const FaceDetectionSchema = z.object({
-  bbox: z.object({
+export const DetectedFaceSchema = z.object({
+  boundingBox: z.object({
     x: z.number(),
     y: z.number(),
     width: z.number(),
     height: z.number(),
   }),
-  landmarks: z.array(
-    z.object({
-      x: z.number(),
-      y: z.number(),
-    })
-  ),
   confidence: z.number().min(0).max(1),
+  landmarks: z
+    .array(
+      z.object({
+        x: z.number(),
+        y: z.number(),
+      })
+    )
+    .optional(),
+  descriptor: z.array(z.number()).optional(),
 });
 
-export type FaceDetection = z.infer<typeof FaceDetectionSchema>;
+export const FaceDetectionResultSchema = z.object({
+  faces: z.array(DetectedFaceSchema),
+  processingTime: z.number(),
+  imageInfo: z.object({
+    width: z.number(),
+    height: z.number(),
+  }),
+});
+
+export type DetectedFace = z.infer<typeof DetectedFaceSchema>;
+export type FaceDetectionResult = z.infer<typeof FaceDetectionResultSchema>;
+
+// 保持向后兼容
+export const FaceDetectionSchema = DetectedFaceSchema;
+export type FaceDetection = DetectedFace;
 
 // 人脸编码类型
 export const FaceEncodingSchema = z.object({

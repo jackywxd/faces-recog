@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useFileUpload } from "@/hooks/use-file-upload";
+import { useFaceDetection } from "@/hooks/use-face-detection";
+import { FaceDetectionResultDisplay } from "@/components/face-detection-result";
 import { formatFileSize } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -28,10 +30,28 @@ export function PhotoUpload() {
     maxFiles: 1,
     onUploadComplete: (files) => {
       console.log("上传完成:", files);
-      // 这里将来会调用 API 进行人脸检测
+      // 上传完成后自动进行面部检测
+      if (files.length > 0 && files[0]?.file) {
+        detectFaces(files[0].file);
+      }
     },
     onUploadError: (error) => {
       console.error("上传失败:", error);
+    },
+  });
+
+  const {
+    isDetecting,
+    result,
+    error: detectionError,
+    detectFaces,
+    reset: resetDetection,
+  } = useFaceDetection({
+    onSuccess: (result) => {
+      console.log("面部检测完成:", result);
+    },
+    onError: (error) => {
+      console.error("面部检测失败:", error);
     },
   });
 
@@ -233,13 +253,20 @@ export function PhotoUpload() {
             <div className="flex gap-2">
               <Button
                 onClick={uploadFiles}
-                disabled={files.some((f) => f.status === "uploading")}
+                disabled={
+                  files.some((f) => f.status === "uploading") || isDetecting
+                }
                 className="flex-1"
               >
                 {files.some((f) => f.status === "uploading") ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
                     上传中...
+                  </>
+                ) : isDetecting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                    检测中...
                   </>
                 ) : (
                   <>
@@ -249,6 +276,31 @@ export function PhotoUpload() {
                 )}
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* 面部检测错误 */}
+        {detectionError && (
+          <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">面部检测失败</span>
+            </div>
+            <p className="text-sm text-red-600 mt-1">{detectionError}</p>
+          </div>
+        )}
+
+        {/* 面部检测结果 */}
+        {result && files.length > 0 && files[0]?.preview && (
+          <div className="mt-6">
+            <FaceDetectionResultDisplay
+              result={result}
+              imageUrl={files[0].preview}
+              onClose={() => {
+                resetDetection();
+                clearFiles();
+              }}
+            />
           </div>
         )}
       </CardContent>
