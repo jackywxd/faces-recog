@@ -53,7 +53,7 @@ const configs = {
     APP_VERSION: "1.0.0-staging",
 
     // API 配置
-    API_BASE_URL: "https://api-staging.colorsofthewind.club",
+    API_BASE_URL: "https://face-recog-api-staging.small-tooth-cc10.workers.dev",
     API_TIMEOUT: 30000,
 
     // 文件上传配置

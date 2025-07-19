@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useToast } from "./use-toast";
 import { useErrorHandler } from "./use-error-handler";
 import { isImageFile, isSupportedImageType, formatFileSize } from "@/lib/utils";
+import { ApiService, type UploadResponse } from "@/lib/api";
 
 export type UploadStatus = "idle" | "uploading" | "success" | "error";
 
@@ -12,6 +13,7 @@ export interface UploadFile {
   progress: number;
   status: UploadStatus;
   error?: string;
+  uploadResponse?: UploadResponse;
 }
 
 export interface UseFileUploadOptions {
@@ -125,7 +127,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
     setFiles([]);
   }, [files]);
 
-  // 模拟上传过程
+  // 真实上传过程
   const uploadFiles = useCallback(async () => {
     if (files.length === 0) {
       handleValidationError("请先选择要上传的文件");
@@ -145,38 +147,44 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
     );
 
     try {
-      // 模拟上传进度
-      for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        setFiles((prev) =>
-          prev.map((file) => ({
-            ...file,
-            progress: Math.min(progress, 100),
-          }))
-        );
-      }
-
-      // 模拟上传完成
-      setFiles((prev) =>
-        prev.map((file) => ({
-          ...file,
-          status: "success" as UploadStatus,
-          progress: 100,
-        }))
+      // 调用真实API上传文件
+      const result = await ApiService.uploadFiles(
+        files.map((f) => f.file),
+        (progress) => {
+          // 更新所有文件的进度
+          setFiles((prev) =>
+            prev.map((file) => ({
+              ...file,
+              progress: Math.min(progress, 100),
+            }))
+          );
+        }
       );
 
-      // 模拟随机上传失败（用于演示错误处理）
-      if (Math.random() < 0.3) {
-        throw new Error("网络连接不稳定，上传失败");
+      if (result.success && result.data) {
+        // 上传成功
+        setFiles((prev) =>
+          prev.map((file, index) => {
+            const uploadResponse = result.data?.[index];
+            return {
+              ...file,
+              status: "success" as UploadStatus,
+              progress: 100,
+              ...(uploadResponse && { uploadResponse }),
+            };
+          })
+        );
+
+        toast({
+          title: "上传成功",
+          description: `成功上传 ${files.length} 个文件，开始进行人脸检测...`,
+          variant: "default",
+        });
+
+        onUploadComplete?.(files);
+      } else {
+        throw new Error(result.error?.message || "上传失败");
       }
-
-      toast({
-        title: "上传成功",
-        description: `成功上传 ${files.length} 个文件，开始进行人脸检测...`,
-        variant: "default",
-      });
-
-      onUploadComplete?.(files);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "上传失败";
 

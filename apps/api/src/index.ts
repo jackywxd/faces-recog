@@ -15,6 +15,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "https://face-recog-web-staging.pages.dev",
       "https://*.pages.dev",
       "https://*.cloudflare.com",
     ],
@@ -77,7 +78,7 @@ app.get("/", (c) => {
 
 // 注册路由
 app.route("/api/health", healthRoutes);
-app.route("/api", uploadRoutes);
+app.route("/api/upload", uploadRoutes);
 
 // 导出应用实例
 export default app;

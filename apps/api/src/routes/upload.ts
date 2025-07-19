@@ -29,7 +29,7 @@ const uploadResponseSchema = z.object({
 });
 
 // 文件上传端点
-uploadRoutes.post("/upload", async (c) => {
+uploadRoutes.post("/", async (c) => {
   try {
     // 检查 Content-Type 是否为 multipart/form-data
     const contentType = c.req.header("content-type");
