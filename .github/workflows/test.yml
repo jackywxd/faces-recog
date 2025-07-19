@@ -22,16 +22,16 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm"
-
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
@@ -50,14 +50,15 @@ jobs:
         continue-on-error: true
 
       - name: 启动测试服务器
+        if: matrix.environment == 'local'
         run: |
-          # 根据环境配置不同的启动方式
-          if [ "${{ matrix.environment }}" = "local" ]; then
-            pnpm run dev &
-            echo "LOCAL_SERVER_PID=$!" >> $GITHUB_ENV
-          else
-            echo "使用远程测试环境: ${{ matrix.environment }}"
-          fi
+          # 启动前端开发服务器
+          pnpm run dev:web &
+          echo "WEB_SERVER_PID=$!" >> $GITHUB_ENV
+
+          # 启动API服务器
+          pnpm run dev:api &
+          echo "API_SERVER_PID=$!" >> $GITHUB_ENV
         env:
           NODE_ENV: test
 
@@ -71,13 +72,19 @@ jobs:
         run: npx playwright test --project=${{ matrix.browser }}
         env:
           TEST_ENV: ${{ matrix.environment }}
-          TEST_BASE_URL: ${{ matrix.environment == 'local' && 'http://localhost:3000' || format('https://{0}.colorsofthewind.club', matrix.environment) }}
-          API_BASE_URL: ${{ matrix.environment == 'local' && 'http://localhost:8787' || format('https://api-{0}.colorsofthewind.club', matrix.environment) }}
+          TEST_BASE_URL: ${{ matrix.environment == 'local' && 'http://localhost:3000' || 'https://251f1a66.face-recog-web-staging.pages.dev' }}
+          API_BASE_URL: ${{ matrix.environment == 'local' && 'http://localhost:8787' || 'https://face-recog-api-staging.small-tooth-cc10.workers.dev' }}
           TEST_SESSION_ID: ${{ github.run_id }}-${{ matrix.browser }}-${{ matrix.environment }}
 
       - name: 停止本地服务器
-        if: matrix.environment == 'local' && env.LOCAL_SERVER_PID
-        run: kill $LOCAL_SERVER_PID || true
+        if: matrix.environment == 'local'
+        run: |
+          if [ ! -z "$WEB_SERVER_PID" ]; then
+            kill $WEB_SERVER_PID || true
+          fi
+          if [ ! -z "$API_SERVER_PID" ]; then
+            kill $API_SERVER_PID || true
+          fi
 
       - name: 上传测试报告
         uses: actions/upload-artifact@v4
@@ -106,16 +113,16 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "pnpm"
-
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
 
       - name: 安装依赖
         run: pnpm install --frozen-lockfile
@@ -127,8 +134,8 @@ jobs:
         run: npx playwright test --project=chromium tests/performance/
         env:
           TEST_ENV: staging
-          TEST_BASE_URL: https://staging.colorsofthewind.club
-          API_BASE_URL: https://api-staging.colorsofthewind.club
+          TEST_BASE_URL: https://251f1a66.face-recog-web-staging.pages.dev
+          API_BASE_URL: https://face-recog-api-staging.small-tooth-cc10.workers.dev
 
       - name: 生成性能报告
         run: |
