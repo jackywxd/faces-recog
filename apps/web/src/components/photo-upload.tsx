@@ -199,7 +199,10 @@ export function PhotoUpload() {
                     {file.status === "uploading" && (
                       <div className="mt-2">
                         <Progress value={file.progress} className="h-1" />
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div
+                          className="text-xs text-muted-foreground mt-1"
+                          data-testid="upload-progress"
+                        >
                           {file.progress}%
                         </div>
                       </div>
